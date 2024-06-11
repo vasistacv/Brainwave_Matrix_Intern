@@ -1,0 +1,93 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Step 1: Create a Realistic Large Dataset
+
+# Function to generate realistic data
+def generate_realistic_data(rows):
+    np.random.seed(0)
+    dates = pd.date_range(start='2023-01-01', end='2023-12-31', freq='D')
+    products = ['Laptop', 'Smartphone', 'Tablet', 'Headphones', 'Smartwatch']
+    categories = ['Electronics', 'Electronics', 'Electronics', 'Accessories', 'Accessories']
+    data = {
+        'Date': np.random.choice(dates, size=rows),
+        'Product': np.random.choice(products, size=rows),
+        'Category': np.random.choice(categories, size=rows, p=[0.3, 0.3, 0.2, 0.1, 0.1]),
+        'Quantity': np.random.randint(1, 10, size=rows),
+        'Price': np.round(np.random.uniform(50.0, 1500.0, size=rows), 2),
+    }
+    df = pd.DataFrame(data)
+    df['Total_Sales'] = df['Quantity'] * df['Price']
+    return df
+
+# Generate 1 million rows of data
+large_sales_data = generate_realistic_data(1_000_000)
+
+# Save to CSV
+large_sales_data.to_csv('large_sales_data.csv', index=False)
+
+# Step 2: Analyze the Data
+
+# Load the data
+df = pd.read_csv('large_sales_data.csv')
+
+# Data cleaning
+df['Date'] = pd.to_datetime(df['Date'])
+df['Quantity'] = df['Quantity'].astype(int)
+df['Price'] = df['Price'].astype(float)
+df['Total_Sales'] = df['Total_Sales'].astype(float)
+
+# Basic analysis
+total_sales = df['Total_Sales'].sum()
+print(f'Total Sales: ${total_sales:,.2f}')
+
+daily_sales = df.groupby('Date')['Total_Sales'].sum()
+avg_daily_sales = daily_sales.mean()
+print(f'Average Daily Sales: ${avg_daily_sales:,.2f}')
+
+top_products = df.groupby('Product')['Total_Sales'].sum().sort_values(ascending=False).head(5)
+print('Top 5 Selling Products:')
+print(top_products)
+
+# Data visualization
+plt.figure(figsize=(14, 7))
+daily_sales.plot()
+plt.title('Total Sales Over Time')
+plt.xlabel('Date')
+plt.ylabel('Total Sales ($)')
+plt.grid(True)
+plt.show()
+
+plt.figure(figsize=(14, 7))
+sns.barplot(x=top_products.index, y=top_products.values)
+plt.title('Top 5 Selling Products')
+plt.xlabel('Product')
+plt.ylabel('Total Sales ($)')
+plt.xticks(rotation=45)
+plt.grid(True)
+plt.show()
+
+category_sales = df.groupby('Category')['Total_Sales'].sum()
+print('Sales by Category:')
+print(category_sales)
+
+plt.figure(figsize=(14, 7))
+sns.barplot(x=category_sales.index, y=category_sales.values)
+plt.title('Sales by Category')
+plt.xlabel('Category')
+plt.ylabel('Total Sales ($)')
+plt.xticks(rotation=45)
+plt.grid(True)
+plt.show()
+
+df['Month'] = df['Date'].dt.to_period('M')
+monthly_sales = df.groupby('Month')['Total_Sales'].sum()
+plt.figure(figsize=(14, 7))
+monthly_sales.plot()
+plt.title('Monthly Sales Trends')
+plt.xlabel('Month')
+plt.ylabel('Total Sales ($)')
+plt.grid(True)
+plt.show()
