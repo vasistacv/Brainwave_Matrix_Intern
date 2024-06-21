@@ -1,0 +1,64 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+from textblob import TextBlob
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from nltk.stem import WordNetLemmatizer
+
+nltk.download('punkt')
+nltk.download('stopwords')
+nltk.download('wordnet')
+
+lemmatizer = WordNetLemmatizer()
+stop_words = set(stopwords.words('english'))
+
+
+def preprocess_text(text):
+    tokens = word_tokenize(text)
+    
+    tokens = [word.lower() for word in tokens]
+      
+    tokens = [word for word in tokens if word not in stop_words]
+  
+    tokens = [lemmatizer.lemmatize(word) for word in tokens]
+    
+    return ' '.join(tokens)
+
+def analyze_sentiment(text):
+    blob = TextBlob(text)
+    return blob.sentiment.polarity
+
+with open('your_dataset.txt', 'r', encoding='utf-8') as file:
+    lines = file.readlines()
+
+cleaned_texts = [preprocess_text(line.strip()) for line in lines]
+
+sentiments = [analyze_sentiment(text) for text in cleaned_texts]
+
+def classify_sentiment(polarity):
+    if polarity > 0:
+        return "Positive"
+    elif polarity < 0:
+        return "Negative"
+    else:
+        return "Neutral"
+
+sentiment_classifications = [classify_sentiment(polarity) for polarity in sentiments]
+
+df = pd.DataFrame({'text': lines, 'cleaned_text': cleaned_texts, 'sentiment': sentiments, 'sentiment_classification': sentiment_classifications})
+
+sentiment_counts = df['sentiment_classification'].value_counts()
+
+sentiment_percentages = (sentiment_counts / len(df)) * 100
+
+for sentiment, percentage in sentiment_percentages.items():
+    print(f"{sentiment}: {percentage:.2f}%")
+
+
+plt.figure(figsize=(8, 6))
+plt.pie(sentiment_counts, labels=sentiment_counts.index, autopct='%1.1f%%', startangle=140)
+plt.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle
+plt.title('Sentiment Analysis Results')
+
+plt.show()
